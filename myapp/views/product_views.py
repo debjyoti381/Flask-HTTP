@@ -41,3 +41,15 @@ def update_views(id):
             return jsonify(error="product is not available"), 400
         return jsonify(error="provide valid credentials"), 401
     return jsonify(error="provide proper method"), 405
+
+@app.route("/delete/<id>",methods=['DELETE'])
+@jwt_required()
+def delete_product(id):
+    if request.method=="DELETE":
+        data = Products.query.get(id)
+        if data:
+            db.session.delete(data)
+            db.session.commit()
+            return jsonify(msg="Data deleted successfully"), 200
+        return jsonify(error="data not found"), 404
+    return jsonify(error="provide a valid method"), 405
