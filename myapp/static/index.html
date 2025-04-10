@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Flask API Frontend</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+    input, button { margin: 5px 0; padding: 10px; width: 100%; }
+    .section { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+    h2 { margin-top: 0; }
+  </style>
+</head>
+<body>
+
+  <!-- Employee Registration -->
+  <div class="section">
+    <h2>Register Employee</h2>
+    <input type="text" id="reg_name" placeholder="Name">
+    <input type="email" id="reg_email" placeholder="Email">
+    <input type="password" id="reg_password" placeholder="Password">
+    <button onclick="register()">Register</button>
+    <div id="register_result"></div>
+  </div>
+
+  <!-- Employee Login -->
+  <div class="section">
+    <h2>Login</h2>
+    <input type="email" id="login_email" placeholder="Email">
+    <input type="password" id="login_password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <div id="login_result"></div>
+  </div>
+
+  <!-- Insert Product -->
+  <div class="section">
+    <h2>Insert Product</h2>
+    <input type="text" id="product_name" placeholder="Product Name">
+    <input type="number" id="product_price" placeholder="Price">
+    <button onclick="insertProduct()">Insert</button>
+    <div id="insert_result"></div>
+  </div>
+
+  <!-- Get Product -->
+  <div class="section">
+    <h2>Get Product by ID</h2>
+    <input type="number" id="get_product_id" placeholder="Product ID">
+    <button onclick="getProduct()">Get Product</button>
+    <div id="get_result"></div>
+  </div>
+
+  <!-- Update Product -->
+  <div class="section">
+    <h2>Update Product</h2>
+    <input type="number" id="update_id" placeholder="Product ID">
+    <input type="text" id="update_name" placeholder="New Name">
+    <input type="number" id="update_price" placeholder="New Price">
+    <button onclick="updateProduct()">Update</button>
+    <div id="update_result"></div>
+  </div>
+
+  <!-- Delete Product -->
+  <div class="section">
+    <h2>Delete Product</h2>
+    <input type="number" id="delete_id" placeholder="Product ID">
+    <button onclick="deleteProduct()">Delete</button>
+    <div id="delete_result"></div>
+  </div>
+
+  <script>
+    let token = "";
+
+    function register() {
+      fetch("/insert_data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: document.getElementById("reg_name").value,
+          email: document.getElementById("reg_email").value,
+          password: document.getElementById("reg_password").value
+        })
+      }).then(res => res.json()).then(data => {
+        document.getElementById("register_result").innerText = data.msg || data.error;
+      });
+    }
+
+    function login() {
+      fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: document.getElementById("login_email").value,
+          password: document.getElementById("login_password").value
+        })
+      }).then(res => res.json()).then(data => {
+        token = data.access_token;
+        document.getElementById("login_result").innerText = token ? "Login successful!" : data.error;
+      });
+    }
+
+    function insertProduct() {
+      fetch("/insert_product", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token
+        },
+        body: JSON.stringify({
+          name: document.getElementById("product_name").value,
+          price: document.getElementById("product_price").value
+        })
+      }).then(res => res.json()).then(data => {
+        document.getElementById("insert_result").innerText = data.msg || data.error;
+      });
+    }
+
+    function getProduct() {
+      const id = document.getElementById("get_product_id").value;
+      fetch(`/get_one_product/${id}`, {
+        method: "GET",
+        headers: { Authorization: "Bearer " + token }
+      }).then(res => res.json()).then(data => {
+        document.getElementById("get_result").innerText = data.name ?
+          `ID: ${data.id}, Name: ${data.name}, Price: ${data.price}` : data.error;
+      });
+    }
+
+    function updateProduct() {
+      const id = document.getElementById("update_id").value;
+      fetch(`/update_product/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token
+        },
+        body: JSON.stringify({
+          name: document.getElementById("update_name").value,
+          price: document.getElementById("update_price").value
+        })
+      }).then(res => res.json()).then(data => {
+        document.getElementById("update_result").innerText = data.msg || data.error;
+      });
+    }
+
+    function deleteProduct() {
+      const id = document.getElementById("delete_id").value;
+      fetch(`/delete_product/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: "Bearer " + token }
+      }).then(res => res.json()).then(data => {
+        document.getElementById("delete_result").innerText = data.msg || data.error;
+      });
+    }
+  </script>
+
+</body>
+</html>

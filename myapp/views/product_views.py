@@ -7,49 +7,56 @@ from flask_jwt_extended import jwt_required
 @app.route('/insert_product', methods=['POST'])
 @jwt_required()
 def insert_product_view():
-    if request.method == "POST":
-        data = request.get_json()
-        if data:
-            user = Products(name=data['name'], price=data['price'])
-            db.session.add(user)
-            db.session.commit()
-            return jsonify(msg="Product inserted successfully")
-        return jsonify(msg="Provide valid credentials")
-    return jsonify(msg="Provide valid method")
+    data = request.get_json()
+    if not data or 'name' not in data or 'price' not in data:
+        return jsonify(error="Product name and price are required"), 400
 
-@app.route('/get_one_data/<id>', methods=['GET'])
+    new_product = Products(name=data['name'], price=data['price'])
+    db.session.add(new_product)
+    db.session.commit()
+
+    return jsonify(msg="Product inserted successfully"), 201
+
+
+@app.route('/get_one_product/<int:id>', methods=['GET'])
 @jwt_required()
-def get_one_views(id):
-    if request.method == "GET":
-        data = Products.query.get(id)
-        print(data)
-        return jsonify(msg=f"id = {data.id}, name = {data.name}, price = {data.price}"), 200
-    return jsonify(error="Please provide a valid method"), 405
+def get_one_product(id):
+    product = Products.query.get(id)
+    if not product:
+        return jsonify(error="Product not found"), 404
 
-@app.route("/update/<id>", methods=["PUT"])
+    return jsonify(
+        id=product.id,
+        name=product.name,
+        price=product.price
+    ), 200
+
+
+@app.route('/update_product/<int:id>', methods=['PUT'])
 @jwt_required()
-def update_views(id):
-    if request.method == "PUT":
-        data = request.get_json()
-        if data:
-            prod = Products.query.get(id)
-            if prod:
-                prod.name = data['name']
-                prod.price = data['price']
-                db.session.commit()
-                return jsonify(msg="product update successfully"), 201
-            return jsonify(error="product is not available"), 400
-        return jsonify(error="provide valid credentials"), 401
-    return jsonify(error="provide proper method"), 405
+def update_product(id):
+    data = request.get_json()
+    if not data:
+        return jsonify(error="Missing data"), 400
 
-@app.route("/delete/<id>",methods=['DELETE'])
+    product = Products.query.get(id)
+    if not product:
+        return jsonify(error="Product not found"), 404
+
+    product.name = data.get('name', product.name)
+    product.price = data.get('price', product.price)
+
+    db.session.commit()
+    return jsonify(msg="Product updated successfully"), 200
+
+
+@app.route('/delete_product/<int:id>', methods=['DELETE'])
 @jwt_required()
 def delete_product(id):
-    if request.method=="DELETE":
-        data = Products.query.get(id)
-        if data:
-            db.session.delete(data)
-            db.session.commit()
-            return jsonify(msg="Data deleted successfully"), 200
-        return jsonify(error="data not found"), 404
-    return jsonify(error="provide a valid method"), 405
+    product = Products.query.get(id)
+    if not product:
+        return jsonify(error="Product not found"), 404
+
+    db.session.delete(product)
+    db.session.commit()
+    return jsonify(msg="Product deleted successfully"), 200
